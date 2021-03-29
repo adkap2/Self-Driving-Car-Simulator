@@ -31,7 +31,6 @@ def telemetry(sid, data):
     if data:
 
         steering_angle = float(data["steering_angle"])
-        
         throttle = float(data["throttle"])
         speed = float(data["speed"])
 
@@ -46,9 +45,10 @@ def telemetry(sid, data):
             image = utils.preprocess(image)
             image = np.array([image])
 
-            steering_angle = float(model.predict(image, batch_size=1)
-            
+            steering_angle = float(model.predict(image, batch_size=1))
+
             global speed_limit
+
             if speed > speed_limit:
                 speed_limit = MIN_SPEED
             else:
@@ -62,7 +62,7 @@ def telemetry(sid, data):
             print(e)
     else:
         sio.emit('manual', data={}, skip_sid=True)
-    
+
 @sio.on('connect')
 def connect(sid, environ):
     print("connect ", sid)
@@ -84,7 +84,29 @@ if __name__=='__main__':
     type=str,
     help='Path to model h5 file')
 
-    pa
+    parser.add_argument(
+        'image_folder',
+        type=str,
+        nargs='?',
+        default='',
+        help = 'Path to image folder. This is where the images from the run will be saved')
+    args = parser.parse_args()
+    model = load_model(args.model)
+
+    if args.image_folder != '':
+        print("Creating image folder at {}".format(args.image_folder))
+        if not os.path.exists(args.image_folder):
+            os.makedirs(args.image_folder)
+        else:
+            shutil.rmtree(args.image_folder)
+            os.makedirs(args.image_folder)
+        print("Recording this Run")
+    else:
+        print("Not recording this run")
+    
+    app = socketio.Middleware(sio, app)
+
+    eventlet.wsgi.server(eventlet.listen(('', 4567)), app)
 
 
 
