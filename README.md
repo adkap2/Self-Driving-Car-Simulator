@@ -53,15 +53,17 @@ to autonomously steer itself based on a set of input images. The deep convolutio
 ## Training
 
 - Training the model required taking the processed camera angle and inputting it into a CNN where it was evaluated against the recorded steering angle
-    at that given state to produce an error. This error was then placed back into the CNN with backpropagation weight adjustment. 
+    at that given state to produce an error. This error was then placed back into the CNN with backpropagation weight adjustment
 
 <img src="figures/block_diagram.png" alt="alt text" width=600 height=300>
 
 
-- I used a convolulational 2d neural network to train the model. 
-- Started with an initial layer of the size of the input shape, then slowly increased number of filters while decreasing kernal size.
-- Model used multiple 50% dropout layers for regularization in between the dense layers.
+- I used a convolulational 2d neural network to train the model
+- Started with an initial layer of the size of the input shape, then slowly increased number of filters while decreasing kernal size
+- Model used multiple 50% dropout layers for regularization in between the dense layers
+- Each layer used an ELU activiation function as it is effective to avoid vanishing gradient while maintaining nonlinearity in the neural network
 - Full neural network yielded 250,000 parameters
+- I used a data generator to load and train a manageable amount of data for each iteration
 
 <img src="figures/hyperparameters.png" alt="alt text" width=300 height=300>
 
@@ -71,14 +73,28 @@ to autonomously steer itself based on a set of input images. The deep convolutio
 
 ## Results
 
+- The predicted steering angle showed a normally distributed like curve compared to the binary output of the target steering angle
+- The increased continuity is likely due to treating this as a complete regression problem a classification problem holding multiple weighted classes
+    may have been a better fit
+- I only had time to collect around 10 minutes of data for this model. With significantly more training data, the model would have likely better predicted the target steering angles
+<img src="figures/predictedvstarget.png" alt="alt text" width=800 height=300>
+
+- I used mean squared error to evaluate the loss metrics on the model
 
 ## Moving Forward
+
+- Although assessing the models loss and accuracy metrics gives reasonable insight into model performance, the model must have real world testing to confirm whether it is successful or not
+- The next step is to use Udacity's provided drive.py file which uses Flask to communicate the trained model to the autonomous vehicle simulator
+- Even with the model showing reasonable loss and accuracy metrics, I would expect it to drive erratically on an unseen testing track
+- Once the model can successfully drive a lap around an unseen track, I would like to implement object detection as well
+- Object detection may include stop signs, pedestrains, and lanes
+- For better training performance, I plan to collect 5x the amount of data with using a joystick instead of a keyboard
 
 ## Technologies Used
 * [Matplotlib](https://matplotlib.org)
 * [Pandas](https://pandas.pydata.org)
 * [Tensorflow Keras](https://www.tensorflow.org/api_docs/python/tf/keras/Model)
-* [Cv2](https://pypi.org/project/opencv-python/)
+* [OpenCV](https://pypi.org/project/opencv-python/)
 * [Flask](https://flask.palletsprojects.com/en/1.1.x/)
 * [NumPy](https://numpy.org)
 * [Autonomous Vehicle Simulator](https://github.com/udacity/self-driving-car-sim)

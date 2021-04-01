@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 import matplotlib.image as npimg
+import pickle
 
 
 import tensorflow as tf
@@ -61,12 +62,12 @@ def load_data(args):
     X = data[['center', 'left', 'right']].values
 
     y = data['steering'].values
-    plot_initial_steering_angle(data)
+    #plot_initial_steering_angle(data)
 
     #X_train, X_valid, y_train, y_valid = train_test_split(X, y, test_size=args.test_size, random_state = 0)
     X_train, X_valid, y_train, y_valid = train_test_split(X, y, test_size=0.2, random_state=0)
 
-    plot_train_val_steering(y_train, y_valid)
+    #plot_train_val_steering(y_train, y_valid)
 
 
     
@@ -85,20 +86,19 @@ def build_model(args):
     model = Sequential()
     model.add(Lambda(lambda x: x/127.5-1.0, input_shape=INPUT_SHAPE))
     model.add(Conv2D(24, (5, 5),  strides=(2, 2), activation='elu'))
-    model.add(Conv2D(36, (5, 5), strides=(2, 2), activation='elu'))
+    #model.add(Conv2D(36, (5, 5), strides=(2, 2), activation='elu'))
     model.add(Conv2D(48, (5, 5), strides=(2, 2),activation='elu'))
     model.add(Conv2D(64, (3, 3), activation='elu'))
-    model.add(Conv2D(64, (3, 3), activation='elu'))
-    model.add(Dropout(args.keep_prob))
+    model.add(Dropout(0.5))
     model.add(Flatten())
     model.add(Dense(100, activation='elu'))
-    model.add(Dropout(args.keep_prob))
+    model.add(Dropout(0.5))
     model.add(Dense(50, activation='elu'))
-    model.add(Dropout(args.keep_prob))
+    model.add(Dropout(0.5))
     model.add(Dense(10, activation='elu'))
-    model.add(Dropout(args.keep_prob))
+    model.add(Dropout(0.5))
     model.add(Dense(1))
-    model.summary()
+    
 
     # from keras.applications import ResNet50
     # resnet = ResNet50(weights='imagenet', include_top=False, input_shape=(100, 100, 3))
@@ -145,7 +145,7 @@ def train_model(model, args, X_train, X_valid, y_train, y_valid):
     #                             save_best_only=args.save_best_only,
     #                             mode='auto')
 
-    model.compile(loss='mean_squared_error', optimizer=Adam(lr=args.learning_rate), metrics=['accuracy'])
+    model.compile(loss='mse', optimizer=Adam(lr=args.learning_rate), metrics=['accuracy'])
 
     # model.fit_generator(batch_generator(args.data_dir, X_train, y_train, args.batch_size, True),
     #                     args.samples_per_epoch,
@@ -166,8 +166,12 @@ def train_model(model, args, X_train, X_valid, y_train, y_valid):
 
     #val_img, val_steer = batch_generator(args.data_dir, X_valid, y_valid, False)
     # print(len(X_train)//args.batch_size)
-    history = model.fit(batch_generator(args.data_dir, X_train, y_train, 3400, True), epochs=args.nb_epoch, validation_data=batch_generator(args.data_dir, X_valid, y_valid, 3400, False), batch_size=args.batch_size, verbose=1, shuffle=1, steps_per_epoch = args.samples_per_epoch)
+    history = model.fit(batch_generator(args.data_dir, X_train, y_train, 1200, True), epochs=args.nb_epoch, validation_data=batch_generator(args.data_dir, X_valid, y_valid, 1200, False), batch_size=args.batch_size, verbose=1, shuffle=1, steps_per_epoch = args.samples_per_epoch)
 
+    hist_df = pd.DataFrame(history.history) 
+    hist_csv_file = 'history.csv'
+    with open(hist_csv_file, mode='w') as f:
+        hist_df.to_csv(f)
     # predictions = model.evaluate(X_valid, y_valid)
     # print(predictions)
     model.save('model', save_format='h5')
@@ -191,7 +195,7 @@ def main():
     parser.add_argument('-d', help = 'data directory', dest= 'data_dir', type=str, default='data')
     parser.add_argument('-t', help='test size fraction', dest='test_size', type=float, default=0.2)
     parser.add_argument('-k', help='tdrop out probability', dest='keep_prob', type=float, default=0.5)
-    parser.add_argument('-n', help='number of epochs', dest='nb_epoch', type=int, default=80)
+    parser.add_argument('-n', help='number of epochs', dest='nb_epoch', type=int, default=5)
     parser.add_argument('-s', help='samples per epoch', dest='samples_per_epoch', type=int, default=40)
     parser.add_argument('-b', help='batch size', dest='batch_size', type=int, default=128)
     parser.add_argument('-o', help='save best models only', dest='save_best_only', type=s2b, default='true')
@@ -207,14 +211,26 @@ def main():
 
     data = load_data(args)
     model = build_model(args)
-    #train_model(model, args, *data)
+    train_model(model, args, *data)
     model = load_model('model')
 
 
     #model.evaluate(batch_generator(args.data_dir, data[1], data[3], 1800, False), )
-    x_array, y_array = batch_generator(args.data_dir, data[1], data[3], 1800, False)
+    x_array, y_array = batch_generator(args.data_dir, data[1], data[3], 400, False)
+    
+    print(x_array, y_array)
+    predictions = model.predict(x_array, steps=args.samples_per_epoch)
 
-    # predictions = model.predict(x_array, steps=args.samples_per_epoch)
+    metrics = model.evaluate(x_array, y_array, steps=args.samples_per_epoch)
+    print(model.metrics_names)
+    print(metrics)
+    # plt.plot(model.history['accuracy'])
+    # plt.plot(model.history['loss'])
+    # plt.legend(['Accuracy', 'Loss'])
+    # plt.title('Model Accuracy and Loss Scores')
+    # plt.xlabel('Epoch')
+    # plt.show()
+
     # print(predictions)
     # num_bins = 25
     # samples_per_bin = 200
@@ -222,23 +238,25 @@ def main():
     # print("Training Samples: {}\nValid Samples: {}".format(len(y_array), len(predictions)))
     # fig, axes = plt.subplots(1, 2, figsize=(12, 4))
     # axes[0].hist(y_array, bins=num_bins, width=0.05, color='blue')
-    # axes[0].set_title('target set')
+    # axes[0].set_title('Target Steering Angles')
+    # axes[0].set_xlabel("Normalized Steering Angle")
     # axes[1].hist(predictions, bins=num_bins, width=0.05, color='red')
-    # axes[1].set_title('predictions set')
+    # axes[1].set_title('Predicted Steering Angles')
+    # axes[1].set_xlabel("Normalized Steering Angle")
     # plt.show()
 
-    image = data[1][80]
-    original_image = npimg.imread(image)
+    # image = data[1][80]
+    # original_image = npimg.imread(image)
 
-    preprocessed_image = x_array[80]
+    # preprocessed_image = x_array[80]
 
-    fig, axes = plt.subplots(1, 2, figsize=(15, 10))
-    fig.tight_layout()
-    axes[0].imshow(original_image)
-    axes[0].set_title('Original Image')
-    axes[1].imshow(preprocessed_image)
-    axes[1].set_title('Preprocessed Image')
-    plt.show()
+    # fig, axes = plt.subplots(1, 2, figsize=(15, 10))
+    # fig.tight_layout()
+    # axes[0].imshow(original_image)
+    # axes[0].set_title('Original Image')
+    # axes[1].imshow(preprocessed_image)
+    # axes[1].set_title('Preprocessed Image')
+    # plt.show()
 
     # with open('model.json', 'w') as outfile:
     #     outfile.write(model.to_json())

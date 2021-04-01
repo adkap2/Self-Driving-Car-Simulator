@@ -98,7 +98,7 @@ def batch_generator(data_dir, image_paths, steering_angles, batch_size, is_train
         images[i] = preprocess(image)
         steers[i] = steering_angle
         i += 1
-        #yield images , steers
+        yield images , steers
 
-    return images, steers
+    #return images, steers
 
