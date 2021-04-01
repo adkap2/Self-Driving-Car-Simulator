@@ -38,7 +38,7 @@ to autonomously steer itself based on a set of input images.
 - For each data point image from center, left or right was randomly chosen and augmented using random flip
     and random translate to gain more usage from data collected
 
-<img src="figures/Image_comparison.png" alt="alt text" width=400 height=300>
+<img src="figures/Image_comparison.png" alt="alt text" width=800 height=300>
 
 ## Running the code
 **All code is stored in src directory**
