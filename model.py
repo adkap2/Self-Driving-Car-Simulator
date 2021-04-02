@@ -78,17 +78,18 @@ def build_model(args):
     model.add(Lambda(lambda x: x/127.5-1.0, input_shape=INPUT_SHAPE))
     # Creates convolutional 2D layer with a filter size of 24 and a 5x5 kernal
     # Uses elu activation function to avoid vanishing gradient
-    #model.add(Conv2D(24, (5, 5),  strides=(2, 2), activation='elu'))
+    model.add(Conv2D(24, (5, 5),  strides=(2, 2), activation='elu'))
     model.add(Conv2D(36, (5, 5), strides=(2, 2), activation='elu'))
     # # Multiple convolutional layers used to generate deep neural network
     #model.add(Conv2D(48, (5, 5), strides=(2, 2),activation='elu'))
-    #model.add(Conv2D(64, (3, 3), activation='elu'))
+    model.add(Conv2D(64, (3, 3), activation='elu'))
     # # Multiple model dropouts added at 50% drop to eliminate overfitting
+    model.add(Dropout(0.5))
     model.add(Flatten())
-    #model.add(Dense(100, activation='elu'))
+    model.add(Dense(100, activation='elu'))
     #model.add(Dropout(0.5))
     #model.add(Dense(10, activation='elu'))
-    #model.add(Dropout(0.5))
+    model.add(Dropout(0.5))
     model.add(Dense(1))
 
     return model
@@ -108,11 +109,18 @@ def train_model(model, args, X_train, X_valid, y_train, y_valid):
     history = model.fit(batch_generator(args.data_dir,
      X_train, y_train, 800, True),
      epochs=args.nb_epoch, validation_data=
-     batch_generator(args.data_dir, X_valid, y_valid, 800, True),
+     batch_generator(args.data_dir, X_valid, y_valid, 800, False),
       batch_size=args.batch_size, verbose=1, shuffle=1,
        steps_per_epoch = args.samples_per_epoch)
+    fig, ax = plt.subplots()
+    ax.plot(history.history['accuracy'])
+    #ax.plot(history.history['loss'][1:])
+    ax.set_xlabel("Epoch")
+    ax.set_ylabel("Score")
+    ax.set_title("Accuracy metrics")
+    ax.legend(['Accuracy'])
     # Saves model to h5 file
-    model.save('model', save_format='h5')
+    model.save('model.h5')
 
 
 def main():
@@ -134,7 +142,7 @@ def main():
     parser.add_argument('-b', help='batch size',
      dest='batch_size', type=int, default=128)
     parser.add_argument('-l', help='learning rate',
-     dest='learning_rate', type=float, default=1.0e-2)
+     dest='learning_rate', type=float, default=1.0e-1)
     args = parser.parse_args()
 
     print('-' * 30)
@@ -150,10 +158,10 @@ def main():
     #model = load_model('model')
 
     # Evaluates model with validation data
-    model.evaluate(batch_generator(args.data_dir, data[1], data[3], 1800, False))
-    x_array, y_array = batch_generator(args.data_dir, data[1], data[3], 400, False)
-    # Makes predictions on model
-    predictions = model.predict(x_array, steps=args.samples_per_epoch)
+    # model.evaluate(batch_generator(args.data_dir, data[1], data[3], 1800, False))
+    # x_array, y_array = batch_generator(args.data_dir, data[1], data[3], 400, False)
+    # # Makes predictions on model
+    # predictions = model.predict(x_array, steps=args.samples_per_epoch)
 
 
 if __name__=='__main__':

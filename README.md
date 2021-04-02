@@ -80,6 +80,8 @@ to autonomously steer itself based on a set of input images. The deep convolutio
 <img src="figures/predictedvstarget.png" alt="alt text" width=800 height=300>
 
 - I used mean squared error to evaluate the loss metrics on the model
+- The base model I used assumed zero gradient in steering
+- Oddly enough, when running the model for more than 4 epochs, the accuracy dropped linearly
 
 <img src="figures/accuracy.png" alt="alt text" width=400 height=300>
 

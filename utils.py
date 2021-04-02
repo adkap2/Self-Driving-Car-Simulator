@@ -65,8 +65,8 @@ def random_translate(image, steering_angle, range_x, range_y):
     # xm, ym = np.mgrid[0:IMAGE_HEIGHT, 0:IMAGE_WIDTH]
 
     # Store height and width of the image
-    transx, transy = range_x * (np.random.rand() - 0.5), range_y 
-    * (np.random.rand() - 0.5)
+    transx, transy = range_x * (np.random.rand() - 0.5), range_y \
+     * (np.random.rand() - 0.5)
     steering_angle += transx * 0.002
     height, width = image.shape[:2]
     #quarter_height, quarter_width = height / 4, width / 4
@@ -89,7 +89,9 @@ def augment(data_dir, center, left, right, steering_angle, range_x=100, range_y=
     return image, steering_angle
 
 def batch_generator(data_dir, image_paths, steering_angles, batch_size, is_training):
-
+    """ Batch generator continously takes data and sends it to the model fit function
+    generator randomly augments images and steering angle
+    """
     #batch_size = image_paths.shape[0] # Batchsize size of sample THIS IS NOT SPLITTING INTO TRAINING/TEST
 
     images = np.empty([batch_size, IMAGE_HEIGHT, IMAGE_WIDTH, IMAGE_CHANNELS])
