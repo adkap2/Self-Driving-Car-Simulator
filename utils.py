@@ -6,28 +6,28 @@ IMAGE_HEIGHT, IMAGE_WIDTH, IMAGE_CHANNELS = 66, 200, 3
 INPUT_SHAPE = (IMAGE_HEIGHT, IMAGE_WIDTH, IMAGE_CHANNELS)
 
 def load_image(data_dir, image_file):
-    # Loads image in from directory where images are stored 
+    """Loads image in from directory where images are stored"""
 
     return mpimp.imread(os.path.join(data_dir, image_file.strip()))
 
 def crop(image):
-
-    #Crop shrink height dimension down to consistent size
+    """Crop shrink height dimension down to consistent size"""
     return image[60:-25, :, :]
 
 def resize(image):
-    # Resize image to consient height, width to be readable 
+    """Resize image to consient height, width to be readable"""
     return cv2.resize(image, (IMAGE_WIDTH, IMAGE_HEIGHT), cv2.INTER_AREA)
 
 def rgb2yuv(image):
-
-    # Convert image from RGB to Y U V channels 
-    # Luminance, chroma blue and chroma red for readability
-    # Better to train model than standard human perception colors
+    """Convert image from RGB to Y U V channels 
+    Luminance, chroma blue and chroma red for readability
+    Better to train model than standard human perception colors"""
 
     return cv2.cvtColor(image, cv2.COLOR_RGB2YUV)
 
 def preprocess(image):
+    """Calls processing functions and returns a
+    processed image"""
 
     image = crop(image)
     image = cv2.GaussianBlur(image, (3, 3), 0)
@@ -36,6 +36,8 @@ def preprocess(image):
     return image
 
 def choose_image(data_dir, center, left, right, steering_angle):
+    """ Random picks an image to be either center, left or right
+    from given point in time"""
 
     choice = np.random.choice(3)
     if choice == 0:
@@ -45,7 +47,8 @@ def choose_image(data_dir, center, left, right, steering_angle):
     return load_image(data_dir, center), steering_angle
 
 def random_flip(image, steering_angle):
-
+    """ Randomly flips image 
+    to extra more information from data set"""
     if np.random.rand() < 0.5:
         image = cv2.flip(image, 1)
         steering_angle = -steering_angle
@@ -53,14 +56,17 @@ def random_flip(image, steering_angle):
 
 
 def random_translate(image, steering_angle, range_x, range_y):
-
+    """ Randomly translates image to extract additional information
+    from dataset
+    returns and image translatation as well as an updated steering angle"""
 
     # x1, y1 = IMAGE_WIDTH * np.random.rand(), 0
     # x2, y2 = IMAGE_WIDTH * np.random.rand(), IMAGE_HEIGHT
     # xm, ym = np.mgrid[0:IMAGE_HEIGHT, 0:IMAGE_WIDTH]
 
     # Store height and width of the image
-    transx, transy = range_x * (np.random.rand() - 0.5), range_y * (np.random.rand() - 0.5)
+    transx, transy = range_x * (np.random.rand() - 0.5), range_y 
+    * (np.random.rand() - 0.5)
     steering_angle += transx * 0.002
     height, width = image.shape[:2]
     #quarter_height, quarter_width = height / 4, width / 4
@@ -72,10 +78,13 @@ def random_translate(image, steering_angle, range_x, range_y):
 
 
 def augment(data_dir, center, left, right, steering_angle, range_x=100, range_y=10):
-
-    image, steering_angle = choose_image(data_dir, center, left, right, steering_angle)
+    """ Augment function takes passed in image and does random
+     shifts and flips on image to gain more usable data"""
+    image, steering_angle = choose_image(data_dir, center, left,
+     right, steering_angle)
     image, steering_angle = random_flip(image, steering_angle)
-    image, steering_angle = random_translate(image, steering_angle, range_x, range_y)
+    image, steering_angle = random_translate(image, steering_angle,
+     range_x, range_y)
 
     return image, steering_angle
 
