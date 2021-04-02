@@ -26,11 +26,11 @@ import os
 print(INPUT_SHAPE)
 
 def plot_initial_steering_angle(data):
+    """ Plots the initial steering angle from data generated"""
     num_bins = 25
     samples_per_bin = 200
     hist, bins = np.histogram(data['steering'], num_bins)
     center = bins[:-1] + bins[1:] * 0.5  # center the bins to 0
-
     plt.bar(center, hist, width=0.05)
     #plt.plot((np.min(data['steering']), np.max(data['steering'])), (samples_per_bin, samples_per_bin))
     plt.title("Distribution of input steering angles")
@@ -40,10 +40,10 @@ def plot_initial_steering_angle(data):
 
     
 def plot_train_val_steering(y_train, y_valid):
+    """ Plots the steering angles for the training and validation sets"""
 
     num_bins = 25
     samples_per_bin = 200
-
     print("Training Samples: {}\nValid Samples: {}".format(len(y_train), len(y_valid)))
     fig, axes = plt.subplots(1, 2, figsize=(12, 4))
     axes[0].hist(y_train, bins=num_bins, width=0.05, color='blue')
@@ -56,47 +56,41 @@ def plot_train_val_steering(y_train, y_valid):
 np.random.seed(100)
 
 def load_data(args):
-
+    """ Loads data in from driving log
+    returns training a validation data
+    """
+    # Load data from driving log csv file
+    # Specifies column names
     data = pd.read_csv(os.path.join(os.getcwd(), args.data_dir, 'driving_log.csv'), names=['center', 'left', 'right', 'steering', 'throttle', 'reverse', 'speed'])
-
     X = data[['center', 'left', 'right']].values
-
     y = data['steering'].values
     #plot_initial_steering_angle(data)
-
-    #X_train, X_valid, y_train, y_valid = train_test_split(X, y, test_size=args.test_size, random_state = 0)
+    # Splits data to training and validation data at 80/20 split
     X_train, X_valid, y_train, y_valid = train_test_split(X, y, test_size=0.2, random_state=0)
-
     #plot_train_val_steering(y_train, y_valid)
-
-
-    
-
 
     return X_train, X_valid, y_train, y_valid
 
 def build_model(args):
-    
-    # resnet = ResNet50(weights='imagenet', include_top=False, input_shape=INPUT_SHAPE)
-
-    # for layer in resnet.layers[:-4]:
-    #     layer.trainable = False
-    
-
-    model = Sequential()
+    """ Builds tensorflow Convolutional 2D model
+    returns Model
+    """
+    model = Sequential()    # Sequential Model used
+    # Initial input layer of shape equal to the input shape defined in utils.py
     model.add(Lambda(lambda x: x/127.5-1.0, input_shape=INPUT_SHAPE))
-    model.add(Conv2D(24, (5, 5),  strides=(2, 2), activation='elu'))
-    #model.add(Conv2D(36, (5, 5), strides=(2, 2), activation='elu'))
-    model.add(Conv2D(48, (5, 5), strides=(2, 2),activation='elu'))
-    model.add(Conv2D(64, (3, 3), activation='elu'))
-    model.add(Dropout(0.5))
+    # Creates convolutional 2D layer with a filter size of 24 and a 5x5 kernal
+    # Uses elu activation function to avoid vanishing gradient
+    #model.add(Conv2D(24, (5, 5),  strides=(2, 2), activation='elu'))
+    model.add(Conv2D(36, (5, 5), strides=(2, 2), activation='elu'))
+    # # Multiple convolutional layers used to generate deep neural network
+    #model.add(Conv2D(48, (5, 5), strides=(2, 2),activation='elu'))
+    #model.add(Conv2D(64, (3, 3), activation='elu'))
+    # # Multiple model dropouts added at 50% drop to eliminate overfitting
     model.add(Flatten())
-    model.add(Dense(100, activation='elu'))
+    #model.add(Dense(100, activation='elu'))
     model.add(Dropout(0.5))
-    model.add(Dense(50, activation='elu'))
-    model.add(Dropout(0.5))
-    model.add(Dense(10, activation='elu'))
-    model.add(Dropout(0.5))
+    # model.add(Dense(10, activation='elu'))
+    # #model.add(Dropout(0.5))
     model.add(Dense(1))
     
 
@@ -166,23 +160,28 @@ def train_model(model, args, X_train, X_valid, y_train, y_valid):
 
     #val_img, val_steer = batch_generator(args.data_dir, X_valid, y_valid, False)
     # print(len(X_train)//args.batch_size)
-    history = model.fit(batch_generator(args.data_dir, X_train, y_train, 1200, True), epochs=args.nb_epoch, validation_data=batch_generator(args.data_dir, X_valid, y_valid, 1200, False), batch_size=args.batch_size, verbose=1, shuffle=1, steps_per_epoch = args.samples_per_epoch)
+    history = model.fit(batch_generator(args.data_dir, X_train, y_train, 1200, True), epochs=args.nb_epoch, validation_data=batch_generator(args.data_dir, X_valid, y_valid, 1200, True), batch_size=args.batch_size, verbose=1, shuffle=1, steps_per_epoch = args.samples_per_epoch)
 
-    hist_df = pd.DataFrame(history.history) 
+    #hist_df = pd.DataFrame(history.history) 
     hist_csv_file = 'history.csv'
-    with open(hist_csv_file, mode='w') as f:
-        hist_df.to_csv(f)
+    # with open(hist_csv_file, mode='w') as f:
+    #     hist_df.to_csv(f)
     # predictions = model.evaluate(X_valid, y_valid)
     # print(predictions)
     model.save('model', save_format='h5')
 
     print(history.history)
     plt.plot(history.history['accuracy'])
-    plt.plot(history.history['loss'])
-    plt.legend(['accuracy', 'loss'])
-    plt.title('Loss')
+    #plt.legend(['accuracy'])
+    plt.title('Accuracy Values for trained model')
     plt.xlabel('Epoch')
+    plt.ylabel('Score')
     plt.show()
+
+    plt.plot(history.history['loss'])
+    plt.title('Loss Values for trained model')
+    plt.show()
+
     
 def s2b(s):
 
@@ -195,11 +194,11 @@ def main():
     parser.add_argument('-d', help = 'data directory', dest= 'data_dir', type=str, default='data')
     parser.add_argument('-t', help='test size fraction', dest='test_size', type=float, default=0.2)
     parser.add_argument('-k', help='tdrop out probability', dest='keep_prob', type=float, default=0.5)
-    parser.add_argument('-n', help='number of epochs', dest='nb_epoch', type=int, default=5)
+    parser.add_argument('-n', help='number of epochs', dest='nb_epoch', type=int, default=10)
     parser.add_argument('-s', help='samples per epoch', dest='samples_per_epoch', type=int, default=40)
     parser.add_argument('-b', help='batch size', dest='batch_size', type=int, default=128)
     parser.add_argument('-o', help='save best models only', dest='save_best_only', type=s2b, default='true')
-    parser.add_argument('-l', help='learning rate', dest='learning_rate', type=float, default=1.0e-3)
+    parser.add_argument('-l', help='learning rate', dest='learning_rate', type=float, default=1.0e-2)
     args = parser.parse_args()
 
     print('-' * 30)
@@ -260,8 +259,8 @@ def main():
 
     # with open('model.json', 'w') as outfile:
     #     outfile.write(model.to_json())
-    #To open previous model weights
-    #model.load_weights("model.h5")
+    # To open previous model weights
+    # model.load_weights("model.h5")
 
 if __name__=='__main__':
     main()

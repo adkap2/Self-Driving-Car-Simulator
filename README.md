@@ -81,6 +81,10 @@ to autonomously steer itself based on a set of input images. The deep convolutio
 
 - I used mean squared error to evaluate the loss metrics on the model
 
+<img src="figures/accuracy.png" alt="alt text" width=400 height=300>
+
+<img src="figures/training_loss.png" alt="alt text" width=400 height=300>
+
 ## Moving Forward
 
 - Although assessing the models loss and accuracy metrics gives reasonable insight into model performance, the model must have real world testing to confirm whether it is successful or not
@@ -89,6 +93,7 @@ to autonomously steer itself based on a set of input images. The deep convolutio
 - Once the model can successfully drive a lap around an unseen track, I would like to implement object detection as well
 - Object detection may include stop signs, pedestrains, and lanes
 - For better training performance, I plan to collect 5x the amount of data with using a joystick instead of a keyboard
+- The ultimate ambitious plan is to implement the trained model on a physically marked test track with raspberry pi attached to an RC Car containing 3 cameras.
 
 ## Technologies Used
 * [Matplotlib](https://matplotlib.org)
