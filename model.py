@@ -24,7 +24,7 @@ def plot_initial_steering_angle(data):
     hist, bins = np.histogram(data['steering'], num_bins)
     center = bins[:-1] + bins[1:] * 0.5  # center the bins to 0
     plt.bar(center, hist, width=0.05)
-    #plt.plot((np.min(data['steering']),
+    # plt.plot((np.min(data['steering']),
     #  np.max(data['steering'])), (samples_per_bin, samples_per_bin))
     plt.title("Distribution of input steering angles")
     plt.xlabel("Normalized Steering Angles")
@@ -38,7 +38,7 @@ def plot_train_val_steering(y_train, y_valid):
     num_bins = 25
     samples_per_bin = 200
     print("Training Samples: {}\nValid Samples: {}".
-    format(len(y_train), len(y_valid)))
+        format(len(y_train), len(y_valid)))
     fig, axes = plt.subplots(1, 2, figsize=(12, 4))
     axes[0].hist(y_train, bins=num_bins, width=0.05, color='blue')
     axes[0].set_title('Training set')
@@ -46,8 +46,10 @@ def plot_train_val_steering(y_train, y_valid):
     axes[1].set_title('Validation set')
     plt.show()
 
+
 # Initializes random seed
 np.random.seed(100)
+
 
 def load_data(args):
     """ Loads data in from driving log
